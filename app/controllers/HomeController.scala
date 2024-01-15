@@ -89,11 +89,14 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     try {
       val json = request.body
       val inputImageForSearch:InputImageForSearch  = Json.parse(json.toString).as[InputImageForSearch]
-      val reference = Reference(url = "", surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputImageForSearch.url)
+      val reference = Reference(url = inputImageForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputImageForSearch.url)
       val imageReference = ImageReference(reference, 0, 0, 0, 0)
       val knowledgeForImage = KnowledgeForImage(UUID.random.toString , imageReference = imageReference)
-      //upload temporary image
-      val updatedKnowledgeForImage = uploadImage(knowledgeForImage)
+
+      val updatedKnowledgeForImage = inputImageForSearch.isUploaded match {
+        case true => knowledgeForImage
+        case _ => uploadImage(knowledgeForImage) //upload temporary image
+      }
       val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url)
       val searchResultEdges = getGraphData(vector, IMAGE.index)
       Ok(Json.toJson(searchResultEdges)).as(JSON)

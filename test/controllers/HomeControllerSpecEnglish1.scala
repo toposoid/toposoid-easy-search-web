@@ -25,7 +25,7 @@ import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.Sentence2Neo4jTransformer
 import com.ideal.linked.toposoid.vectorizer.FeatureVectorizer
-import controllers.TestUtils.{getKnowledge, getUUID, registSingleClaim}
+import controllers.TestUtils.{getKnowledge, getTemporaryImageInfo, getUUID, registSingleClaim}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -199,7 +199,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarity = 1.0f)
+      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarity = 1.0f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json")
@@ -231,7 +231,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarity = 1.0f)
+      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarity = 1.0f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json")
@@ -246,6 +246,40 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
     }
   }
 
+  "The specification6" should {
+    "returns an appropriate response" in {
+      val propositionId1 = getUUID()
+      val sentenceId1 = getUUID()
+      val sentenceId2 = getUUID()
+      val knowledgePremise = getKnowledge(lang = lang, sentence = sentenceA, reference = referenceA, imageBoxInfo = imageBoxInfoA)
+      val knowledgeClaim = getKnowledge(lang = lang, sentence = sentenceB, reference = referenceB, imageBoxInfo = imageBoxInfoB)
+
+      val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
+        List(KnowledgeForParser(propositionId1, sentenceId1, knowledgePremise)),
+        List.empty[PropositionRelation],
+        List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
+        List.empty[PropositionRelation])
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Thread.sleep(5000)
+
+      //Get TemporaryImage
+      val knowledgeForImage: KnowledgeForImage = getTemporaryImageInfo(referenceB, imageBoxInfoB)
+
+      val inputSentenceForSearch = InputImageForSearch(url = knowledgeForImage.imageReference.reference.url, lang = lang, similarity = 1.0f, true)
+      val json = Json.toJson(inputSentenceForSearch).toString()
+      val fr = FakeRequest(POST, "/searchImage")
+        .withHeaders("Content-type" -> "application/json")
+        .withJsonBody(Json.parse(json))
+      val result = call(controller.searchImage(), fr)
+      status(result) mustBe OK
+      contentType(result) mustBe Some("application/json")
+      val jsonResult: String = contentAsJson(result).toString()
+      val searchResultEdges: SearchResultEdges = Json.parse(jsonResult).as[SearchResultEdges]
+      print(searchResultEdges)
+      assert(searchResultEdges.analyzedEdges.size == 3)
+    }
+  }
   //TODO:Add Test for Multiple Results
 
 }

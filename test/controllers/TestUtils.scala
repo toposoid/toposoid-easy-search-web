@@ -61,6 +61,18 @@ object TestUtils {
     registContentResult.knowledgeForImage
   }
 
+  def getTemporaryImageInfo(reference: Reference, imageBoxInfo: ImageBoxInfo): KnowledgeForImage = {
+    val imageReference = ImageReference(reference: Reference, imageBoxInfo.x, imageBoxInfo.y, imageBoxInfo.weight, imageBoxInfo.height)
+    val knowledgeForImage = KnowledgeForImage(id = getUUID(), imageReference = imageReference)
+    val registContentResultJson = ToposoidUtils.callComponent(
+      Json.toJson(knowledgeForImage).toString(),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_HOST"),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_PORT"),
+      "uploadTemporaryImage")
+    val temporaryContentResult: RegistContentResult = Json.parse(registContentResultJson).as[RegistContentResult]
+    temporaryContentResult.knowledgeForImage
+  }
+
   def registSingleClaim(knowledgeForParser: KnowledgeForParser): Unit = {
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
       List.empty[KnowledgeForParser],
