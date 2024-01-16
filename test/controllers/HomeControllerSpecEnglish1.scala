@@ -77,7 +77,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val knowledgeForParser = KnowledgeForParser(propositionId = propositionId1, sentenceId = sentenceId1, knowledge = knowledge)
       registSingleClaim(knowledgeForParser)
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarity = 1.0f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json")
@@ -112,7 +112,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarity = 1.0f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json")
@@ -161,7 +161,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val knowledgeForParser = KnowledgeForParser(propositionId = propositionId2, sentenceId = sentenceId3, knowledge = knowledge)
       registSingleClaim(knowledgeForParser)
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarity = 1.0f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json")
@@ -199,7 +199,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarity = 1.0f, false)
+      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json")
@@ -231,7 +231,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarity = 1.0f, false)
+      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json")
@@ -266,7 +266,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       //Get TemporaryImage
       val knowledgeForImage: KnowledgeForImage = getTemporaryImageInfo(referenceB, imageBoxInfoB)
 
-      val inputSentenceForSearch = InputImageForSearch(url = knowledgeForImage.imageReference.reference.url, lang = lang, similarity = 1.0f, true)
+      val inputSentenceForSearch = InputImageForSearch(url = knowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, true)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json")

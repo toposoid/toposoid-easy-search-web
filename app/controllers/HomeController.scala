@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, ToposoidUtils}
 import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
-import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForSearch}
+import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.FeatureVector
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
 import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
@@ -75,7 +75,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         isNegativeSentence = false,
         knowledgeForImages = List.empty[KnowledgeForImage])
       val vector = FeatureVectorizer.getSentenceVector(knowledge)
-      val searchResultEdges = getGraphData(vector, SENTENCE.index)
+      val searchResultEdges = getGraphData(vector, SENTENCE.index, inputSentenceForSearch.similarityThreshold)
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
@@ -98,7 +98,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         case _ => uploadImage(knowledgeForImage) //upload temporary image
       }
       val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url)
-      val searchResultEdges = getGraphData(vector, IMAGE.index)
+      val searchResultEdges = getGraphData(vector, IMAGE.index, inputImageForSearch.similarityThreshold)
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
@@ -108,13 +108,13 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     }
   }
 
-  private def getGraphData(vector:FeatureVector, featureType:Int):SearchResultEdges= {
+  private def getGraphData(vector:FeatureVector, featureType:Int, similarityThreshold:Float):SearchResultEdges= {
     val vectorDBInfo = featureType match {
       case IMAGE.index => (conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_IMAGE_VECTORDB_SEARCH_NUM_MAX"))
       case _ => (conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_SEARCH_NUM_MAX"))
     }
-    val searchJson: String = Json.toJson(SingleFeatureVectorForSearch(vector = vector.vector, num = vectorDBInfo._3.toInt)).toString()
-    val featureVectorSearchResultJson: String = ToposoidUtils.callComponent(searchJson, vectorDBInfo._1, vectorDBInfo._2, "search")
+    val searchJson: String = Json.toJson(SingleFeatureVectorForEasySearch(vector = vector.vector, num = vectorDBInfo._3.toInt, similarityThreshold = similarityThreshold)).toString()
+    val featureVectorSearchResultJson: String = ToposoidUtils.callComponent(searchJson, vectorDBInfo._1, vectorDBInfo._2, "easySearch")
     val result = Json.parse(featureVectorSearchResultJson).as[FeatureVectorSearchResult]
     val searchResult: (List[SearchResultNode], List[SearchResultEdge]) = (result.ids zip result.similarities).foldLeft(List.empty[SearchResultNode], List.empty[SearchResultEdge]) {
       (acc, x) => {
