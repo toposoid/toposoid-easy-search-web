@@ -52,6 +52,7 @@ jobs:
             docker-compose -f docker-compose-workflow.yml up -d toposoid-sentence-parser-english-web
             curl -X POST  -d 'Life is beautiful.' http://localhost:9000
             docker-compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt 'testOnly **.*English1'"
+            docker rm --force $(docker ps -a -q) > /dev/null 2>&1 && :
             docker rmi --force $(docker images -q) > /dev/null 2>&1 && :
       - name: Docker meta
         id: docker_meta
