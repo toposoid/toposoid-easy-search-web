@@ -61,7 +61,7 @@ services:
       - PRIVATE_IP_ADDRESS=toposoid-sentence-parser-english-web
       - PLAY_HTTP_PORT=9007
       - TOPOSOID_CORENLP_HOST=corenlp
-      - TOPOSOID_PARSER_SPACY_MODEL_EN=en_core_web_lg
+      - TOPOSOID_PARSER_SPACY_MODEL_EN=en_core_web_md
     ports:
       - 9007:9007
   toposoid-common-nlp-english-web:
