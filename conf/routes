@@ -4,5 +4,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
++ nocsrf
 POST     /searchSentence                    controllers.HomeController.searchSentence()
++ nocsrf
 POST     /searchImage                       controllers.HomeController.searchImage()
