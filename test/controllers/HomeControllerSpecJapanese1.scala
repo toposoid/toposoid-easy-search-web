@@ -60,12 +60,12 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
   val sentenceA = "猫が２匹います。"
   val referenceA = Reference(url = "", surface = "猫が", surfaceIndex = 0, isWholeSentence = false,
     originalUrlOrReference = "http://images.cocodataset.org/val2017/000000039769.jpg")
-  val imageBoxInfoA = ImageBoxInfo(x =11 , y = 11, weight = 466, height = 310)
+  val imageBoxInfoA = ImageBoxInfo(x =11 , y = 11, width = 466, height = 310)
 
   val sentenceB = "犬が１匹います。"
   val referenceB = Reference(url = "", surface = "", surfaceIndex = -1, isWholeSentence = true,
     originalUrlOrReference = "http://images.cocodataset.org/train2017/000000428746.jpg")
-  val imageBoxInfoB = ImageBoxInfo(x = 0, y = 0, weight = 0, height = 0)
+  val imageBoxInfoB = ImageBoxInfo(x = 0, y = 0, width = 0, height = 0)
 
 
   val lang = "ja_JP"
