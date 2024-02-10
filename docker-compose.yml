@@ -1,11 +1,15 @@
 version: '3'
 services:
   toposoid-easy-search-web:
-    image: toposoid/toposoid-easy-search-web:0.5-SNAPSHOT
+    image: toposoid/toposoid-easy-search-web:0.5-SNAPSHOT-lowspec
     environment:
-      - PRIVATE_IP_ADDRESS=localhost
+      - PRIVATE_IP_ADDRESS=toposoid-easy-search-web
       - TOPOSOID_GRAPHDB_HOST=neo4j
       - TOPOSOID_GRAPHDB_WEB_HOST=scala-data-accessor-neo4j-web
+      - TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST=toposoid-sentence-parser-japanese-web
+      - TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT=9001
+      - TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST=toposoid-sentence-parser-english-web
+      - TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT=9007
       - TOPOSOID_COMMON_NLP_JP_WEB_HOST=toposoid-common-nlp-japanese-web
       - TOPOSOID_COMMON_NLP_JP_WEB_PORT=9006
       - TOPOSOID_COMMON_NLP_EN_WEB_HOST=toposoid-common-nlp-english-web
@@ -23,62 +27,58 @@ services:
       - PLAY_HTTP_PORT=9014
     ports:
       - 9014:9014
-    depends_on:
-      - neo4j
-      - toposoid-common-nlp-japanese-web
-      - toposoid-common-nlp-english-web
   scala-data-accessor-neo4j-web:
-    image: toposoid/scala-data-accessor-neo4j-web:0.5-SNAPSHOT-workflow
+    image: toposoid/scala-data-accessor-neo4j-web:0.5-SNAPSHOT-lowspec
     environment:
-      - PRIVATE_IP_ADDRESS=scala-data-accessor-neo4j-web
       - TOPOSOID_GRAPHDB_HOST=neo4j
+      - PRIVATE_IP_ADDRESS=scala-data-accessor-neo4j-web
       - PLAY_HTTP_PORT=9005
     ports:
       - 9005:9005
   toposoid-sentence-parser-japanese-web:
-    image: toposoid/toposoid-sentence-parser-japanese-web:0.5-SNAPSHOT-workflow
+    image: toposoid/toposoid-sentence-parser-japanese-web:0.5-SNAPSHOT-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-sentence-parser-japanese-web
       - PLAY_HTTP_PORT=9001
     ports:
       - 9001:9001
   toposoid-common-nlp-japanese-web:
-    image: toposoid/toposoid-common-nlp-japanese-web:0.5-SNAPSHOT-workflow
+    image: toposoid/toposoid-common-nlp-japanese-web:0.5-SNAPSHOT-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-common-nlp-japanese-web
       - TOPOSOID_SYNONYM_NOUN_SIMILARITY_THRESHHOLD_JP=0.52
       - TOPOSOID_SYNONYM_VERB_SIMILARITY_THRESHHOLD_JP=0.52
       - TOPOSOID_WORD2VEC_SIMILARITY_THRESHHOLD_JP=0.68
-      - TOPOSOID_CHIVE_MODEL_VERSION=chive-1.2-mc15.kv
-      - TOPOSOID_SENTENCEBERT_MODEL_JP=sentence-transformers/paraphrase-multilingual-mpnet-base-v2
-      - SENTENCE_TRANSFORMERS_HOME=./models
+      - TOPOSOID_CHIVE_MODEL_VERSION=chive-1.2-mc90.kv
+      - TOPOSOID_SENTENCEBERT_MODEL_JP=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - TOPOSOID_SENTENCE_TRANSFORMERS_HOME=./models
       - PLAY_HTTP_PORT=9006
     ports:
       - 9006:9006
   toposoid-sentence-parser-english-web:
-    image: toposoid/toposoid-sentence-parser-english-web:0.5-SNAPSHOT
+    image: toposoid/toposoid-sentence-parser-english-web:0.5-SNAPSHOT-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-sentence-parser-english-web
       - PLAY_HTTP_PORT=9007
       - TOPOSOID_CORENLP_HOST=corenlp
-      - TOPOSOID_PARSER_SPACY_MODEL_EN=en_core_web_lg
+      - TOPOSOID_PARSER_SPACY_MODEL_EN=en_core_web_md
     ports:
       - 9007:9007
   toposoid-common-nlp-english-web:
-    image: toposoid/toposoid-common-nlp-english-web:0.5-SNAPSHOT
+    image: toposoid/toposoid-common-nlp-english-web:0.5-SNAPSHOT-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-common-nlp-english-web
       - TOPOSOID_SYNONYM_NOUN_SIMILARITY_THRESHHOLD_EN=0.52
       - TOPOSOID_SYNONYM_VERB_SIMILARITY_THRESHHOLD_EN=0.52
       - TOPOSOID_WORD2VEC_SIMILARITY_THRESHHOLD_EN=0.78
-      - TOPOSOID_SPACY_MODEL_EN=en_core_web_lg
-      - TOPOSOID_SENTENCEBERT_MODEL_EN=sentence-transformers/paraphrase-multilingual-mpnet-base-v2
-      - SENTENCE_TRANSFORMERS_HOME=./models
+      - TOPOSOID_SPACY_MODEL_EN=en_core_web_md
+      - TOPOSOID_SENTENCEBERT_MODEL_EN=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - TOPOSOID_SENTENCE_TRANSFORMERS_HOME=./models
       - PLAY_HTTP_PORT=9008
     ports:
       - 9008:9008
   corenlp:
-    image: toposoid/corenlp:3.4.2
+    image: toposoid/corenlp:3.4.2-lowspec
     ports:
       - 9000:9000
   neo4j:
@@ -106,11 +106,11 @@ services:
       - 9012:9012
 
   toposoid-common-image-recognition-web:
-    image: toposoid/toposoid-common-image-recognition-web:0.5-SNAPSHOT
+    image: toposoid/toposoid-common-image-recognition-web:0.5-SNAPSHOT-lowspec
     environment:
       - TOPOSOID_IMAGE_RECOGNITION_VIT_MODEL=google/vit-base-patch16-224
       - TOPOSOID_IMAGE_RECOGNITION_MOBILE_VIT_MODEL=apple/mobilevit-small
-      - TOPOSOID_IMAGE_RECOGNITION_MOBILE_VIT_USE=0
+      - TOPOSOID_IMAGE_RECOGNITION_MOBILE_VIT_USE=1
     ports:
       - 9013:9013
 
@@ -180,6 +180,3 @@ services:
       HUGGINGFACE_APIKEY: ''
       ENABLE_MODULES: 'text2vec-cohere,text2vec-huggingface,text2vec-palm,text2vec-openai,generative-openai,generative-cohere,generative-palm,ref2vec-centroid,reranker-cohere,qna-openai'
       CLUSTER_HOSTNAME: 'node1'
-
-
-

@@ -60,12 +60,12 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
   val sentenceA = "There are two cats."
   val referenceA = Reference(url = "", surface = "cats", surfaceIndex = 3, isWholeSentence = false,
     originalUrlOrReference = "http://images.cocodataset.org/val2017/000000039769.jpg")
-  val imageBoxInfoA = ImageBoxInfo(x =11 , y = 11, weight = 466, height = 310)
+  val imageBoxInfoA = ImageBoxInfo(x =11 , y = 11, width = 466, height = 310)
 
   val sentenceB = "There is a dog."
   val referenceB = Reference(url = "", surface = "", surfaceIndex = -1, isWholeSentence = true,
     originalUrlOrReference = "http://images.cocodataset.org/train2017/000000428746.jpg")
-  val imageBoxInfoB = ImageBoxInfo(x = 0, y = 0, weight = 0, height = 0)
+  val imageBoxInfoB = ImageBoxInfo(x = 0, y = 0, width = 0, height = 0)
 
 
   val lang = "en_US"
