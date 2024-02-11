@@ -14,6 +14,17 @@ This microservice provides a simple search API. Specifically, it supports text s
 ## Requirements
 * Docker version 20.10.x, or later
 * docker-compose version 1.22.x
+* The following microservices must be running
+  * toposoid/toposoid-sentence-parser-japanese-web
+  * toposoid/toposoid-sentence-parser-english-web
+  * toposoid/toposoid-common-nlp-japanese-web
+  * toposoid/toposoid-common-nlp-english-web
+  * toposoid-common-image-recognition-web
+  * toposoid/toposoid-contents-admin-web
+  * toposoid/data-accessor-weaviate-web
+  * semitechnologies/weaviate
+  * neo4j
+
 
 ## Memory requirements For Standalone
 * Required: at least 16GB of RAM
