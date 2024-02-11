@@ -26,7 +26,7 @@ This microservice provides a simple search API. Specifically, it supports text s
   * neo4j
 
 
-## Memory requirements For Standalone
+## Recommended Environment For Standalone
 * Required: at least 16GB of RAM
 * Required: at least 40G of HDD(Total required Docker Image size) 
 * Please understand that since we are dealing with large models such as LLM, the Dockerfile size is large and the required machine SPEC is high.
