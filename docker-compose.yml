@@ -3,7 +3,7 @@ services:
   toposoid-easy-search-web:
     image: toposoid/toposoid-easy-search-web:0.5-SNAPSHOT-lowspec
     environment:
-      - PRIVATE_IP_ADDRESS=toposoid-easy-search-web
+      - PRIVATE_IP_ADDRESS=localhost
       - TOPOSOID_GRAPHDB_HOST=neo4j
       - TOPOSOID_GRAPHDB_WEB_HOST=scala-data-accessor-neo4j-web
       - TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST=toposoid-sentence-parser-japanese-web

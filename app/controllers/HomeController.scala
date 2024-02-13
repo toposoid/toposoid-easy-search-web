@@ -143,7 +143,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
               case _ => None
             }
             val featureNode = z.value.featureNode match {
-              case Some(a) => Option(SearchResultNode(id = a.featureId, sentence = "", sentenceType = -1, similarity = similarity, url = a.source))
+              case Some(a) => Option(SearchResultNode(id = a.featureId, sentence = "", sentenceType = -1, similarity = similarity, url = a.url))
               case _ => None
             }
             acc3 :+ semiGlobalNode :+ featureNode
