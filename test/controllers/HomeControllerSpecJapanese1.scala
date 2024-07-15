@@ -19,7 +19,7 @@ package controllers
 import akka.util.Timeout
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.ToposoidUtils
+import com.ideal.linked.toposoid.common.{TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, PropositionRelation, Reference}
 import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
@@ -39,10 +39,12 @@ import scala.concurrent.duration.DurationInt
 
 class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with BeforeAndAfterAll with GuiceOneAppPerSuite with DefaultAwaitTimeout with Injecting {
 
+  val transversalState:String = Json.toJson(TransversalState(username="guest")).toString()
+
   before {
     Neo4JAccessor.delete()
-    ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), "createSchema")
-    ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), "createSchema")
+    ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), "createSchema", TransversalState(username="guest"))
+    ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), "createSchema", TransversalState(username="guest"))
     Thread.sleep(1000)
   }
 
@@ -80,7 +82,7 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchSentence(), fr)
       status(result) mustBe OK
@@ -108,14 +110,14 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, TransversalState(username="guest"))
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, TransversalState(username="guest"))
       Thread.sleep(5000)
 
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchSentence(), fr)
       status(result) mustBe OK
@@ -153,8 +155,8 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, TransversalState(username="guest"))
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, TransversalState(username="guest"))
       Thread.sleep(5000)
 
       val knowledge = Knowledge(sentence = sentenceA, lang = lang, extentInfoJson = "{}", isNegativeSentence = false, knowledgeForImages = List.empty[KnowledgeForImage])
@@ -164,7 +166,7 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchSentence(), fr)
       status(result) mustBe OK
@@ -195,14 +197,14 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, TransversalState(username="guest"))
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, TransversalState(username="guest"))
       Thread.sleep(5000)
 
       val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchImage(), fr)
       status(result) mustBe OK
@@ -227,14 +229,14 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, TransversalState(username="guest"))
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, TransversalState(username="guest"))
       Thread.sleep(5000)
 
       val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarityThreshold = 0.85f, true)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchImage(), fr)
       status(result) mustBe OK
@@ -259,8 +261,8 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser)
+      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, TransversalState(username="guest"))
+      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, TransversalState(username="guest"))
       Thread.sleep(5000)
 
       //Get TemporaryImage
@@ -268,7 +270,7 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       val inputSentenceForSearch = InputImageForSearch(url = knowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, true)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
-        .withHeaders("Content-type" -> "application/json")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalState)
         .withJsonBody(Json.parse(json))
       val result = call(controller.searchImage(), fr)
       status(result) mustBe OK

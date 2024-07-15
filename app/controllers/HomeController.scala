@@ -18,7 +18,7 @@ package controllers
 
 import akka.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, ToposoidUtils}
+import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.FeatureVector
@@ -64,6 +64,7 @@ object SearchResultEdges {
 class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) with LazyLogging{
 
   def searchSentence() = Action(parse.json) { request =>
+    val transversalState = Json.parse(request.headers.get(TRANSVERSAL_STATE .str).get).as[TransversalState]
     try {
       val json = request.body
       val inputSentenceForSearch:InputSentenceForSearch  = Json.parse(json.toString()).as[InputSentenceForSearch]
@@ -74,18 +75,20 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         extentInfoJson = "{}",
         isNegativeSentence = false,
         knowledgeForImages = List.empty[KnowledgeForImage])
-      val vector = FeatureVectorizer.getSentenceVector(knowledge)
-      val searchResultEdges = getGraphData(vector, SENTENCE.index, inputSentenceForSearch.similarityThreshold)
+      val vector = FeatureVectorizer.getSentenceVector(knowledge, transversalState)
+      val searchResultEdges = getGraphData(vector, SENTENCE.index, inputSentenceForSearch.similarityThreshold, transversalState)
+      logger.info(ToposoidUtils.formatMessageForLogger("Searching sentence completed.", transversalState.username))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
-        logger.error(e.toString(), e)
+        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.username), e)
         BadRequest(Json.obj("status" -> "Error", "message" -> e.toString()))
       }
     }
   }
 
   def searchImage() = Action(parse.json) { request =>
+    val transversalState = Json.parse(request.headers.get(TRANSVERSAL_STATE .str).get).as[TransversalState]
     try {
       val json = request.body
       val inputImageForSearch:InputImageForSearch  = Json.parse(json.toString).as[InputImageForSearch]
@@ -95,33 +98,34 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
       val updatedKnowledgeForImage = inputImageForSearch.isUploaded match {
         case true => knowledgeForImage
-        case _ => uploadImage(knowledgeForImage) //upload temporary image
+        case _ => uploadImage(knowledgeForImage, transversalState) //upload temporary image
       }
-      val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url)
-      val searchResultEdges = getGraphData(vector, IMAGE.index, inputImageForSearch.similarityThreshold)
+      val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url, transversalState)
+      val searchResultEdges = getGraphData(vector, IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
+      logger.info(ToposoidUtils.formatMessageForLogger("Searching image completed.", transversalState.username))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
-        logger.error(e.toString(), e)
+        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.username), e)
         BadRequest(Json.obj("status" -> "Error", "message" -> e.toString()))
       }
     }
   }
 
-  private def getGraphData(vector:FeatureVector, featureType:Int, similarityThreshold:Float):SearchResultEdges= {
+  private def getGraphData(vector:FeatureVector, featureType:Int, similarityThreshold:Float, transversalState:TransversalState):SearchResultEdges= {
     val vectorDBInfo = featureType match {
       case IMAGE.index => (conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_IMAGE_VECTORDB_SEARCH_NUM_MAX"))
       case _ => (conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_SEARCH_NUM_MAX"))
     }
     val searchJson: String = Json.toJson(SingleFeatureVectorForEasySearch(vector = vector.vector, num = vectorDBInfo._3.toInt, similarityThreshold = similarityThreshold)).toString()
-    val featureVectorSearchResultJson: String = ToposoidUtils.callComponent(searchJson, vectorDBInfo._1, vectorDBInfo._2, "easySearch")
+    val featureVectorSearchResultJson: String = ToposoidUtils.callComponent(searchJson, vectorDBInfo._1, vectorDBInfo._2, "easySearch", transversalState)
     val result = Json.parse(featureVectorSearchResultJson).as[FeatureVectorSearchResult]
     val searchResult: (List[SearchResultNode], List[SearchResultEdge]) = (result.ids zip result.similarities).foldLeft(List.empty[SearchResultNode], List.empty[SearchResultEdge]) {
       (acc, x) => {
         //ノードの情報を全て取得
-        val searchResultNodes = getAllNodeByPropositionIds(x._1, x._2)
+        val searchResultNodes = getAllNodeByPropositionIds(x._1, x._2, transversalState)
         //エッジの情報を取得
-        val searchResultEdges = getTrivialEdges(x._1, searchResultNodes:List[SearchResultNode])
+        val searchResultEdges = getTrivialEdges(x._1, searchResultNodes:List[SearchResultNode], transversalState)
         (acc._1:::searchResultNodes, acc._2 ::: searchResultEdges)
       }
     }
@@ -129,10 +133,10 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     SearchResultEdges(getNonTrivialEdges(searchResult))
   }
 
-  private def getAllNodeByPropositionIds(featureVectorIdentifier: FeatureVectorIdentifier, similarity:Float):List[SearchResultNode] ={
+  private def getAllNodeByPropositionIds(featureVectorIdentifier: FeatureVectorIdentifier, similarity:Float, transversalState:TransversalState):List[SearchResultNode] ={
     //ノードの情報を全て取得
     val query = "MATCH (n) WHERE n.propositionId='%s' RETURN n".format(featureVectorIdentifier.propositionId)
-    val jsonStr = FacadeForAccessNeo4J.getCypherQueryResult(query, "x")
+    val jsonStr = FacadeForAccessNeo4J.getCypherQueryResult(query, "x", transversalState)
     val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
     neo4jRecords.records.foldLeft(List.empty[SearchResultNode]) {
       (acc2, y) => {
@@ -156,10 +160,10 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     }
   }
 
-  private def getTrivialEdges(featureVectorIdentifier: FeatureVectorIdentifier, searchResultNodes:List[SearchResultNode])={
+  private def getTrivialEdges(featureVectorIdentifier: FeatureVectorIdentifier, searchResultNodes:List[SearchResultNode], transversalState:TransversalState)={
     //エッジの情報を取得
     val query2 = "MATCH (n1)-[e]->(n2) WHERE n1.propositionId='%s' AND n2.propositionId='%s' RETURN n1,e,n2".format(featureVectorIdentifier.propositionId, featureVectorIdentifier.propositionId)
-    val jsonStr2 = FacadeForAccessNeo4J.getCypherQueryResult(query2, "x")
+    val jsonStr2 = FacadeForAccessNeo4J.getCypherQueryResult(query2, "x", transversalState)
     val neo4jRecords2: Neo4jRecords = Json.parse(jsonStr2).as[Neo4jRecords]
     var count = 0
     neo4jRecords2.records.foldLeft(List.empty[SearchResultEdge]) {
@@ -232,12 +236,13 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
   }
 
-  private def uploadImage(knowledgeForImage: KnowledgeForImage): KnowledgeForImage = {
+  private def uploadImage(knowledgeForImage: KnowledgeForImage, transversalState:TransversalState): KnowledgeForImage = {
     val registContentResultJson = ToposoidUtils.callComponent(
       Json.toJson(knowledgeForImage).toString(),
       conf.getString("TOPOSOID_CONTENTS_ADMIN_HOST"),
       conf.getString("TOPOSOID_CONTENTS_ADMIN_PORT"),
-      "uploadTemporaryImage")
+      "uploadTemporaryImage",
+      transversalState)
     val registContentResult: RegistContentResult = Json.parse(registContentResultJson).as[RegistContentResult]
     registContentResult.knowledgeForImage
   }
