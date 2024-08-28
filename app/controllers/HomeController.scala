@@ -77,11 +77,11 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         knowledgeForImages = List.empty[KnowledgeForImage])
       val vector = FeatureVectorizer.getSentenceVector(knowledge, transversalState)
       val searchResultEdges = getGraphData(vector, SENTENCE.index, inputSentenceForSearch.similarityThreshold, transversalState)
-      logger.info(ToposoidUtils.formatMessageForLogger("Searching sentence completed.", transversalState.username))
+      logger.info(ToposoidUtils.formatMessageForLogger("Searching sentence completed.", transversalState.userId))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
-        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.username), e)
+        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.userId), e)
         BadRequest(Json.obj("status" -> "Error", "message" -> e.toString()))
       }
     }
@@ -102,11 +102,11 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
       }
       val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url, transversalState)
       val searchResultEdges = getGraphData(vector, IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
-      logger.info(ToposoidUtils.formatMessageForLogger("Searching image completed.", transversalState.username))
+      logger.info(ToposoidUtils.formatMessageForLogger("Searching image completed.", transversalState.userId))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
       case e: Exception => {
-        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.username), e)
+        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.userId), e)
         BadRequest(Json.obj("status" -> "Error", "message" -> e.toString()))
       }
     }
