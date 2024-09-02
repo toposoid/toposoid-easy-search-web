@@ -5,8 +5,8 @@ services:
     tty: true
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-easy-search-web
-      - TOPOSOID_GRAPHDB_HOST=neo4j
       - TOPOSOID_GRAPHDB_WEB_HOST=scala-data-accessor-neo4j-web
+      - TOPOSOID_GRAPHDB_WEB_PORT=9005
       - TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST=toposoid-sentence-parser-japanese-web
       - TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT=9001
       - TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST=toposoid-sentence-parser-english-web
@@ -134,7 +134,7 @@ services:
       - '8080'
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.26.1
+    image: cr.weaviate.io/semitechnologies/weaviate:1.26.3
     ports:
       - 8080:8080
     #volumes:
@@ -169,7 +169,7 @@ services:
       - '8081'
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.26.1
+    image: cr.weaviate.io/semitechnologies/weaviate:1.26.3
     ports:
       - 8081:8081
     #volumes:
