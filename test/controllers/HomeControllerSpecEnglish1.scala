@@ -19,12 +19,14 @@ package controllers
 import akka.util.Timeout
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, PropositionRelation, Reference}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, PropositionRelation, Reference}
 import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.Sentence2Neo4jTransformer
+import com.ideal.linked.toposoid.test.utils.TestUtils
 import com.ideal.linked.toposoid.vectorizer.FeatureVectorizer
-import controllers.TestUtils.{getKnowledge, getTemporaryImageInfo, getUUID, registSingleClaim}
+import controllers.TestUtilsEx.{getKnowledge, getTemporaryImageInfo, getUUID}
+//import controllers.TestUtils.{getKnowledge, getTemporaryImageInfo, getUUID, registSingleClaim}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -33,7 +35,7 @@ import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.test.Helpers.{POST, contentType, status, _}
 import play.api.test._
-
+import io.jvm.uuid.UUID
 import scala.concurrent.duration.DurationInt
 
 class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with BeforeAndAfterAll with GuiceOneAppPerSuite with DefaultAwaitTimeout with Injecting {
@@ -42,19 +44,21 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
   val transversalStateJson:String = Json.toJson(transversalState).toString()
 
   before {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
     ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), "createSchema", transversalState)
     ToposoidUtils.callComponent("{}", conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"), conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), "createSchema", transversalState)
     Thread.sleep(1000)
   }
 
   override def beforeAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def afterAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
+
+
 
   override implicit def defaultAwaitTimeout: Timeout = 600.seconds
   val controller: HomeController = inject[HomeController]
@@ -77,7 +81,13 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val sentenceId1 = getUUID()
       val knowledge = Knowledge(sentence = sentenceA, lang = lang, extentInfoJson = "{}", isNegativeSentence = false, knowledgeForImages = List.empty[KnowledgeForImage])
       val knowledgeForParser = KnowledgeForParser(propositionId = propositionId1, sentenceId = sentenceId1, knowledge = knowledge)
-      registSingleClaim(knowledgeForParser, transversalState)
+      val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
+        premiseList = List.empty[KnowledgeForParser],
+        premiseLogicRelation = List.empty[PropositionRelation],
+        claimList = List(knowledgeForParser),
+        claimLogicRelation = List.empty[PropositionRelation])
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
+
 
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
@@ -93,6 +103,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       assert(searchResultEdges.analyzedEdges.filter(x => {
         x.source.sentence.equals(sentenceA) || x.target.sentence.equals(sentenceA)
       }).size == 1)
+      TestUtils.deleteData(knowledgeSentenceSetForParser, transversalState)
     }
   }
 
@@ -110,8 +121,8 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
+
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
       Thread.sleep(5000)
 
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
@@ -137,6 +148,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       assert(searchResultEdges.analyzedEdges.filter(x => {
         !x.source.url.equals("") || !x.target.url.equals("")
       }).size == 2)
+      TestUtils.deleteData(knowledgeSentenceSetForParser, transversalState)
     }
   }
 
@@ -155,13 +167,16 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
-      Thread.sleep(5000)
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
 
       val knowledge = Knowledge(sentence = sentenceA, lang = lang, extentInfoJson = "{}", isNegativeSentence = false, knowledgeForImages = List.empty[KnowledgeForImage])
       val knowledgeForParser = KnowledgeForParser(propositionId = propositionId2, sentenceId = sentenceId3, knowledge = knowledge)
-      registSingleClaim(knowledgeForParser, transversalState)
+      val knowledgeSentenceSetForParser2 = KnowledgeSentenceSetForParser(
+        List.empty[KnowledgeForParser],
+        List.empty[PropositionRelation],
+        List(knowledgeForParser),
+        List.empty[PropositionRelation])
+      TestUtils.registerData(knowledgeSentenceSetForParser2, transversalState)
 
       val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
@@ -197,9 +212,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
-      Thread.sleep(5000)
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
 
       val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
@@ -229,9 +242,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
-      Thread.sleep(5000)
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
 
       val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
@@ -261,9 +272,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation],
         List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
         List.empty[PropositionRelation])
-      Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
-      FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
-      Thread.sleep(5000)
+      TestUtils.registerData(knowledgeSentenceSetForParser, transversalState)
 
       //Get TemporaryImage
       val knowledgeForImage: KnowledgeForImage = getTemporaryImageInfo(referenceB, imageBoxInfoB, transversalState)
@@ -283,5 +292,4 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
     }
   }
   //TODO:Add Test for Multiple Results
-
 }

@@ -15,8 +15,7 @@ scalaVersion := "2.13.11"
 libraryDependencies += guice
 libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.6-SNAPSHOT"
 libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.6-SNAPSHOT"
-libraryDependencies += "com.ideal.linked" %% "toposoid-feature-vectorizer" % "0.6-SNAPSHOT"
 libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-common" % "0.6-SNAPSHOT"
-libraryDependencies += "com.ideal.linked" %% "toposoid-sentence-transformer-neo4j" % "0.6-SNAPSHOT" % Test
+libraryDependencies +=  "com.ideal.linked" %% "toposoid-test-utils" % "0.6-SNAPSHOT" % Test
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
 
