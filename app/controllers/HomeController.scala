@@ -135,7 +135,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
   private def getAllNodeByPropositionIds(featureVectorIdentifier: FeatureVectorIdentifier, similarity:Float, transversalState:TransversalState):List[SearchResultNode] ={
     //ノードの情報を全て取得
-    val query = "MATCH (n) WHERE n.propositionId='%s' RETURN n".format(featureVectorIdentifier.propositionId)
+    val query = "MATCH (n) WHERE n.propositionId='%s' RETURN n".format(featureVectorIdentifier.superiorId)
     val jsonStr = FacadeForAccessNeo4J.getCypherQueryResult(query, "x", transversalState)
     val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
     neo4jRecords.records.foldLeft(List.empty[SearchResultNode]) {
@@ -143,7 +143,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         val searchInnerResult = y.foldLeft((List.empty[Option[SearchResultNode]])) {
           (acc3, z) => {
             val semiGlobalNode = z.value.semiGlobalNode match {
-              case Some(a) => Option(SearchResultNode(id = a.nodeId, sentence = a.sentence, sentenceType = a.sentenceType, similarity = similarity, url = ""))
+              case Some(a) => Option(SearchResultNode(id = a.sentenceId, sentence = a.sentence, sentenceType = a.sentenceType, similarity = similarity, url = ""))
               case _ => None
             }
             val featureNode = z.value.featureNode match {
@@ -162,21 +162,21 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
   private def getTrivialEdges(featureVectorIdentifier: FeatureVectorIdentifier, searchResultNodes:List[SearchResultNode], transversalState:TransversalState)={
     //エッジの情報を取得
-    val query2 = "MATCH (n1)-[e]->(n2) WHERE n1.propositionId='%s' AND n2.propositionId='%s' RETURN n1,e,n2".format(featureVectorIdentifier.propositionId, featureVectorIdentifier.propositionId)
+    val query2 = "MATCH (n1)-[e]->(n2) WHERE n1.propositionId='%s' AND n2.propositionId='%s' RETURN n1,e,n2".format(featureVectorIdentifier.superiorId, featureVectorIdentifier.superiorId)
     val jsonStr2 = FacadeForAccessNeo4J.getCypherQueryResult(query2, "x", transversalState)
     val neo4jRecords2: Neo4jRecords = Json.parse(jsonStr2).as[Neo4jRecords]
     var count = 0
     neo4jRecords2.records.foldLeft(List.empty[SearchResultEdge]) {
       (acc2, y) => {
         val n1NodeId = y.filter(_.key.equals("n1")).head.value.semiGlobalNode match {
-          case Some(a) => a.nodeId
+          case Some(a) => a.sentenceId
           case _ => y.filter(_.key.equals("n1")).head.value.featureNode match {
             case Some(b) => b.featureId
             case _ => ""
           }
         }
         val n2NodeId = y.filter(_.key.equals("n2")).head.value.semiGlobalNode match {
-          case Some(a) => a.nodeId
+          case Some(a) => a.sentenceId
           case _ => y.filter(_.key.equals("n2")).head.value.featureNode match {
             case Some(b) => b.featureId
             case _ => ""
