@@ -11,7 +11,7 @@ RUN git clone https://github.com/toposoid/toposoid-test-utils.git \
 && cd toposoid-test-utils \
 && git pull \
 && git fetch origin ${TARGET_BRANCH} \
-&& git checkout ${TARGET_BRANCH}
+&& git checkout ${TARGET_BRANCH} \
 && sbt publishLocal \
 && rm -Rf ./target \
 && cd .. \
