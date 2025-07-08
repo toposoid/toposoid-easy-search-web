@@ -22,7 +22,7 @@ import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
-import com.ideal.linked.toposoid.knowledgebase.nlp.model.FeatureVector
+import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
 import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
@@ -55,6 +55,13 @@ object SearchResultEdges {
   implicit val jsonReads: Reads[SearchResultEdges] = Json.reads[SearchResultEdges]
 }
 
+case class DetectedLanguage(lang:String)
+object DetectedLanguage {
+  implicit val jsonWrites: OWrites[DetectedLanguage] = Json.writes[DetectedLanguage]
+  implicit val jsonReads: Reads[DetectedLanguage] = Json.reads[DetectedLanguage]
+}
+
+
 /**
  *
  * @param system
@@ -69,10 +76,12 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     try {
       val json = request.body
       val inputSentenceForSearch:InputSentenceForSearch  = Json.parse(json.toString()).as[InputSentenceForSearch]
-
+      val singleSentence = SingleSentence(sentence = inputSentenceForSearch.sentence)
+      val res = ToposoidUtils.callComponent(Json.toJson(singleSentence).toString(), conf.getString("TOPOSOID_LANGUAGE_DETECTOR_HOST"), conf.getString("TOPOSOID_LANGUAGE_DETECTOR_PORT"), "detectLanguage", transversalState)
+      val detectedLanguage = Json.parse(res).as[DetectedLanguage]
       val knowledge = Knowledge(
         sentence = inputSentenceForSearch.sentence,
-        lang = inputSentenceForSearch.lang,
+        lang = detectedLanguage.lang,
         extentInfoJson = "{}",
         isNegativeSentence = false,
         knowledgeForImages = List.empty[KnowledgeForImage])
