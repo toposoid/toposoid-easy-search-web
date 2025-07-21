@@ -18,4 +18,4 @@ fi
 
 export _JAVA_OPTIONS=$_JAVA_OPTIONS
 cd /app/toposoid-easy-search-web/target/universal
-toposoid-easy-search-web-0.6-SNAPSHOT/bin/toposoid-easy-search-web
+toposoid-easy-search-web-0.6/bin/toposoid-easy-search-web
