@@ -43,7 +43,7 @@ docker-compose up
 # Please refer to the following for information on registering data to try searching.
 # ref. https://github.com/toposoid/toposoid-knowledge-register-web
 #for example
-curl -X POST -H "Content-Type: application/json" -d '{
+curl -X POST -H "Content-Type: application/json" -H 'X_TOPOSOID_TRANSVERSAL_STATE: {"userId":"test-user", "username":"guest", "roleId":0, "csrfToken":""}' -d '{
     "premiseList": [],
     "premiseLogicRelation": [],
     "claimList": [
@@ -83,7 +83,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
 ' http://localhost:9004/analyzeKnowledgeTree
 
 #Image Search
-curl -X POST -H "Content-Type: application/json" -d '{
+curl -X POST -H "Content-Type: application/json" -H 'X_TOPOSOID_TRANSVERSAL_STATE: {"userId":"test-user", "username":"guest", "roleId":0, "csrfToken":""}' -d '{
     "url": "http://images.cocodataset.org/val2017/000000039769.jpg",
     "lang": "ja_JP",
     "similarityThreshold": 0.9,
@@ -96,7 +96,23 @@ curl -X POST -H "Content-Type: application/json" -d '{
 * If you want to run in a remote environment or a virtual environment, change PRIVATE_IP_ADDRESS in docker-compose.yml according to your environment.
 
 ## License
-toposoid/toposoid-easy-search-web is Open Source software released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.html).
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://toposoid.com/contact.  For AGPL licensing, see below.
+
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 ## Author
 * Makoto Kubodera([Linked Ideal LLC.](https://linked-ideal.com/))
