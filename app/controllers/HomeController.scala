@@ -17,7 +17,8 @@
 
 package controllers
 
-import akka.actor.ActorSystem
+//import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
