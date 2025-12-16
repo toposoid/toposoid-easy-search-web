@@ -27,7 +27,7 @@ import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, An
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
 import play.api.libs.json.Json
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 
 import scala.util.matching.Regex
 import com.ideal.linked.toposoid.test.utils.TestUtils
@@ -49,9 +49,9 @@ object TestUtilsEx {
   var usedUuidList = List.empty[String]
 
   def getUUID(): String = {
-    var uuid: String = UUID.random.toString
+    var uuid: String = java.util.UUID.randomUUID().toString
     while (usedUuidList.filter(_.equals(uuid)).size > 0) {
-      uuid = UUID.random.toString
+      uuid = java.util.UUID.randomUUID().toString
     }
     usedUuidList = usedUuidList :+ uuid
     uuid

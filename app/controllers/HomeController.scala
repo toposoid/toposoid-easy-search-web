@@ -28,12 +28,12 @@ import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.vectorizer.FeatureVectorizer
 import com.typesafe.scalalogging.LazyLogging
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 
 import javax.inject._
 import play.api._
 import play.api.mvc._
-import play.api.libs.json.{Json, OWrites, Reads, __}
+import play.api.libs.json.{Json, OWrites, Reads, JsValue, __}
 
 import scala.concurrent.ExecutionContext
 
@@ -71,7 +71,7 @@ object DetectedLanguage {
 @Singleton
 class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) with LazyLogging{
 
-  def searchSentence() = Action(parse.json) { request =>
+  def searchSentence():Action[JsValue] = Action(parse.json[JsValue]) { request =>
     val transversalState = Json.parse(request.headers.get(TRANSVERSAL_STATE .str).get).as[TransversalState]
     try {
       val json = request.body
@@ -97,14 +97,14 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     }
   }
 
-  def searchImage() = Action(parse.json) { request =>
+  def searchImage():Action[JsValue] = Action(parse.json[JsValue]) { request =>
     val transversalState = Json.parse(request.headers.get(TRANSVERSAL_STATE .str).get).as[TransversalState]
     try {
       val json = request.body
       val inputImageForSearch:InputImageForSearch  = Json.parse(json.toString).as[InputImageForSearch]
       val reference = Reference(url = inputImageForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputImageForSearch.url)
       val imageReference = ImageReference(reference, 0, 0, 0, 0)
-      val knowledgeForImage = KnowledgeForImage(UUID.random.toString , imageReference = imageReference)
+      val knowledgeForImage = KnowledgeForImage(java.util.UUID.randomUUID().toString , imageReference = imageReference)
 
       val updatedKnowledgeForImage = inputImageForSearch.isUploaded match {
         case true => knowledgeForImage
