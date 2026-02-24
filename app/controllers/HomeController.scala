@@ -20,7 +20,7 @@ package controllers
 //import akka.actor.ActorSystem
 import org.apache.pekko.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{IMAGE, SENTENCE, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{FeatureType, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
@@ -87,7 +87,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         isNegativeSentence = false,
         knowledgeForImages = List.empty[KnowledgeForImage])
       val vector = FeatureVectorizer.getSentenceVector(knowledge, transversalState)
-      val searchResultEdges = getGraphData(vector, SENTENCE.index, inputSentenceForSearch.similarityThreshold, transversalState)
+      val searchResultEdges = getGraphData(vector, FeatureType.SENTENCE.index, inputSentenceForSearch.similarityThreshold, transversalState)
       logger.info(ToposoidUtils.formatMessageForLogger("Searching sentence completed.", transversalState.userId))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
@@ -112,7 +112,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
         case _ => uploadImage(knowledgeForImage, transversalState) //upload temporary image
       }
       val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url, transversalState)
-      val searchResultEdges = getGraphData(vector, IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
+      val searchResultEdges = getGraphData(vector, FeatureType.IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
       logger.info(ToposoidUtils.formatMessageForLogger("Searching image completed.", transversalState.userId))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
     } catch {
@@ -125,7 +125,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
   private def getGraphData(vector:FeatureVector, featureType:Int, similarityThreshold:Float, transversalState:TransversalState):SearchResultEdges= {
     val vectorDBInfo = featureType match {
-      case IMAGE.index => (conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_IMAGE_VECTORDB_SEARCH_NUM_MAX"))
+      case FeatureType.IMAGE.index => (conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_IMAGE_VECTORDB_SEARCH_NUM_MAX"))
       case _ => (conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_SEARCH_NUM_MAX"))
     }
     val searchJson: String = Json.toJson(SingleFeatureVectorForEasySearch(vector = vector.vector, num = vectorDBInfo._3.toInt, similarityThreshold = similarityThreshold)).toString()
