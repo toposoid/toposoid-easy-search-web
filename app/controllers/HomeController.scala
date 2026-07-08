@@ -21,7 +21,6 @@ package controllers
 import org.apache.pekko.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{FeatureType, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
-import com.ideal.linked.toposoid.deduction.common.FacadeForAccessNeo4J
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
@@ -37,6 +36,7 @@ import play.api.mvc._
 import play.api.libs.json.{Json, OWrites, Reads, JsValue, __}
 
 import scala.concurrent.ExecutionContext
+import com.ideal.linked.toposoid.common.Neo4JUtilsImpl
 
 case class SearchResultNode(id:String, sentence:String, sentenceType:Int, similarity:Float, url:String)
 object SearchResultNode {
@@ -147,7 +147,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
   private def getAllNodeByPropositionIds(featureVectorIdentifier: FeatureVectorIdentifier, similarity:Float, transversalState:TransversalState):List[SearchResultNode] ={
     //ノードの情報を全て取得
     val query = "MATCH (n) WHERE n.propositionId='%s' RETURN n".format(featureVectorIdentifier.superiorId)
-    val jsonStr = FacadeForAccessNeo4J.getCypherQueryResult(query, "x", transversalState)
+    val jsonStr = Neo4JUtilsImpl().getCypherQueryResult(query, "x", transversalState)
     val neo4jRecords: Neo4jRecords = Json.parse(jsonStr).as[Neo4jRecords]
     neo4jRecords.records.foldLeft(List.empty[SearchResultNode]) {
       (acc2, y) => {
@@ -174,7 +174,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
   private def getTrivialEdges(featureVectorIdentifier: FeatureVectorIdentifier, searchResultNodes:List[SearchResultNode], transversalState:TransversalState)={
     //エッジの情報を取得
     val query2 = "MATCH (n1)-[e]->(n2) WHERE n1.propositionId='%s' AND n2.propositionId='%s' RETURN n1,e,n2".format(featureVectorIdentifier.superiorId, featureVectorIdentifier.superiorId)
-    val jsonStr2 = FacadeForAccessNeo4J.getCypherQueryResult(query2, "x", transversalState)
+    val jsonStr2 = Neo4JUtilsImpl().getCypherQueryResult(query2, "x", transversalState)
     val neo4jRecords2: Neo4jRecords = Json.parse(jsonStr2).as[Neo4jRecords]
     var count = 0
     neo4jRecords2.records.foldLeft(List.empty[SearchResultEdge]) {
