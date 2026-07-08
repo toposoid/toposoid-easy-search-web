@@ -142,7 +142,7 @@ object TestUtilsEx {
           deductionResult = x.deductionResult)
       }
     }
-    AnalyzedSentenceObjects(updatedAsos)
+    AnalyzedSentenceObjects(updatedAsos, asos.deductionConfiguration)
   }
 
   def addImageInfoToSemiGlobalNode(lang:String,inputSentence: String, knowledgeForImages: List[KnowledgeForImage], transversalState:TransversalState): AnalyzedSentenceObjects = {
@@ -190,7 +190,7 @@ object TestUtilsEx {
           deductionResult = x.deductionResult)
       }
     }
-    AnalyzedSentenceObjects(updatedAsos)
+    AnalyzedSentenceObjects(updatedAsos, asos.deductionConfiguration)
   }
   /*
   val langPatternJP: Regex = "^ja_.*".r
