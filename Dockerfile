@@ -14,14 +14,6 @@ RUN git clone https://github.com/toposoid/toposoid-test-utils.git \
 && sbt publishLocal \
 && rm -Rf ./target \
 && cd .. \
-&& git clone https://github.com/toposoid/toposoid-deduction-common.git \
-&& cd toposoid-deduction-common \
-&& git pull \
-&& git fetch origin ${TARGET_BRANCH} \
-&& git checkout ${TARGET_BRANCH} \
-&& sbt publishLocal \
-&& rm -Rf ./target \
-&& cd .. \
 && git clone https://github.com/toposoid/toposoid-easy-search-web.git \
 && cd toposoid-easy-search-web \
 && git pull \
