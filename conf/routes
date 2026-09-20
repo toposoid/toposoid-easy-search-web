@@ -8,3 +8,5 @@
 POST     /searchSentence                    controllers.HomeController.searchSentence()
 + nocsrf
 POST     /searchImage                       controllers.HomeController.searchImage()
++ nocsrf
+POST     /searchTable                       controllers.HomeController.searchTable()

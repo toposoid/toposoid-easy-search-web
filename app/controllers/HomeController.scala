@@ -21,7 +21,7 @@ package controllers
 import org.apache.pekko.actor.ActorSystem
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{FeatureType, TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
-import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, RegistContentResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
+import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
 import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
@@ -37,6 +37,11 @@ import play.api.libs.json.{Json, OWrites, Reads, JsValue, __}
 
 import scala.concurrent.ExecutionContext
 import com.ideal.linked.toposoid.common.Neo4JUtilsImpl
+import com.ideal.linked.toposoid.knowledgebase.image.model.SingleImage
+import org.apache.pekko.io.Tcp.Register
+import com.ideal.linked.toposoid.knowledgebase.image.model.RegisteredImageContentResult
+import com.ideal.linked.toposoid.knowledgebase.regist.model.KnowledgeForTable
+import com.ideal.linked.toposoid.knowledgebase.table.model.RegisteredTableContentResult
 
 case class SearchResultNode(id:String, sentence:String, sentenceType:Int, similarity:Float, url:String)
 object SearchResultNode {
@@ -79,7 +84,7 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
       val inputSentenceForSearch:InputSentenceForSearch  = Json.parse(json.toString()).as[InputSentenceForSearch]
       val singleSentence = SingleSentence(sentence = inputSentenceForSearch.sentence)
       val res = ToposoidUtils.callComponent(Json.toJson(singleSentence).toString(), conf.getString("TOPOSOID_LANGUAGE_DETECTOR_HOST"), conf.getString("TOPOSOID_LANGUAGE_DETECTOR_PORT"), "detectLanguage", transversalState)
-      val detectedLanguage = Json.parse(res).as[DetectedLanguage]
+      val detectedLanguage = Json.parse(res).as[DetectedLanguage] 
       val knowledge = Knowledge(
         sentence = inputSentenceForSearch.sentence,
         lang = detectedLanguage.lang,
@@ -109,9 +114,9 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
       val updatedKnowledgeForImage = inputImageForSearch.isUploaded match {
         case true => knowledgeForImage
-        case _ => uploadImage(knowledgeForImage, transversalState) //upload temporary image
+        case _ => convertImage(knowledgeForImage, transversalState) //upload temporary image
       }
-      val vector = FeatureVectorizer.getImageVector(updatedKnowledgeForImage.imageReference.reference.url, transversalState)
+      val vector = FeatureVectorizer.getImageVector(SingleImage(url=updatedKnowledgeForImage.imageReference.reference.url), transversalState)
       val searchResultEdges = getGraphData(vector, FeatureType.IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
       logger.info(ToposoidUtils.formatMessageForLogger("Searching image completed.", transversalState.userId))
       Ok(Json.toJson(searchResultEdges)).as(JSON)
@@ -122,10 +127,36 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
       }
     }
   }
+  /*
+  def searchTable():Action[JsValue] = Action(parse.json[JsValue]) { request =>
+    val transversalState = Json.parse(request.headers.get(TRANSVERSAL_STATE .str).get).as[TransversalState]
+    try {
+      val json = request.body
+      val inputImageForSearch:InputTableForSearch  = Json.parse(json.toString).as[InputTableForSearch]
+      val reference = Reference(url = InputTableForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = InputTableForSearch.url)
+      val tableReference = TableReference(reference, 0, 0, 0, 0)
+      val knowledgeForTable = KnowledgeForTable(java.util.UUID.randomUUID().toString , tableReference = tableReference)
 
+      val updatedKnowledgeForTable = InputTableForSearch.isUploaded match {
+        case true => knowledgeForTable
+        case _ => convertTable(knowledgeForTable, transversalState) //upload temporary image
+      }
+      val vector = FeatureVectorizer.getTablerVector(SingleImage(url=updatedKnowledgeForTable.tableReference.reference.url), transversalState)
+      val searchResultEdges = getGraphData(vector, FeatureType.TABLE.index, inputTableForSearch.similarityThreshold, transversalState)
+      logger.info(ToposoidUtils.formatMessageForLogger("Searching table completed.", transversalState.userId))
+      Ok(Json.toJson(searchResultEdges)).as(JSON)
+    } catch {
+      case e: Exception => {
+        logger.error(ToposoidUtils.formatMessageForLogger(e.toString, transversalState.userId), e)
+        BadRequest(Json.obj("status" -> "Error", "message" -> e.toString()))
+      }
+    }
+  }
+  */
   private def getGraphData(vector:FeatureVector, featureType:Int, similarityThreshold:Float, transversalState:TransversalState):SearchResultEdges= {
     val vectorDBInfo = featureType match {
       case FeatureType.IMAGE.index => (conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_IMAGE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_IMAGE_VECTORDB_SEARCH_NUM_MAX"))
+      case FeatureType.TABLE.index => (conf.getString("TOPOSOID_TABLE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_TABLE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_TABLE_VECTORDB_SEARCH_NUM_MAX"))
       case _ => (conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_HOST"),conf.getString("TOPOSOID_SENTENCE_VECTORDB_ACCESSOR_PORT"), conf.getString("TOPOSOID_SENTENCE_VECTORDB_SEARCH_NUM_MAX"))
     }
     val searchJson: String = Json.toJson(SingleFeatureVectorForEasySearch(vector = vector.vector, num = vectorDBInfo._3.toInt, similarityThreshold = similarityThreshold)).toString()
@@ -247,15 +278,30 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
 
   }
 
-  private def uploadImage(knowledgeForImage: KnowledgeForImage, transversalState:TransversalState): KnowledgeForImage = {
-    val registContentResultJson = ToposoidUtils.callComponent(
+  private def convertImage(knowledgeForImage: KnowledgeForImage, transversalState:TransversalState): KnowledgeForImage = {
+
+    //fileはアップロード済みの前提
+    val registeredContentResultJson = ToposoidUtils.callComponent(
       Json.toJson(knowledgeForImage).toString(),
       conf.getString("TOPOSOID_CONTENTS_ADMIN_HOST"),
       conf.getString("TOPOSOID_CONTENTS_ADMIN_PORT"),
-      "uploadTemporaryImage",
+      "convertImage",
       transversalState)
-    val registContentResult: RegistContentResult = Json.parse(registContentResultJson).as[RegistContentResult]
-    registContentResult.knowledgeForImage
+    val registeredContentResult: RegisteredImageContentResult = Json.parse(registeredContentResultJson).as[RegisteredImageContentResult]
+    registeredContentResult.knowledgeForImage
+  }
+
+  private def convertTable(knowledgeForTable: KnowledgeForTable, transversalState:TransversalState): KnowledgeForTable = {
+
+    //fileはアップロード済みの前提
+    val registeredContentResultJson = ToposoidUtils.callComponent(
+      Json.toJson(knowledgeForTable).toString(),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_HOST"),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_PORT"),
+      "convertTable",
+      transversalState)
+    val registeredContentResult: RegisteredTableContentResult = Json.parse(registeredContentResultJson).as[RegisteredTableContentResult]
+    registeredContentResult.knowledgeForTable
   }
 
 }
