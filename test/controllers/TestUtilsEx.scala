@@ -21,7 +21,7 @@ import com.ideal.linked.toposoid.common.{FeatureType, DataEntryType, Neo4JUtilsI
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, PropositionRelation, Reference}
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.ToposoidUtils.assignId
-import com.ideal.linked.toposoid.knowledgebase.featurevector.model.RegistContentResult
+//import com.ideal.linked.toposoid.knowledgebase.featurevector.model.RegistContentResult
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseNode, KnowledgeBaseSemiGlobalNode, KnowledgeFeatureReference, LocalContext, LocalContextForFeature}
 import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, AnalyzedSentenceObjects}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
@@ -31,7 +31,7 @@ import play.api.libs.json.Json
 
 import scala.util.matching.Regex
 import com.ideal.linked.toposoid.test.utils.TestUtils
-case class ImageBoxInfo(x:Int, y:Int, width:Int, height:Int)
+//case class ImageBoxInfo(x:Int, y:Int, width:Int, height:Int)
 
 
 object TestUtilsEx {
@@ -57,7 +57,23 @@ object TestUtilsEx {
     uuid
   }
 
-
+  /*
+  def getTemporaryImageInfo(, transversalState:TransversalState): KnowledgeForImage = {
+    val imageReference = ImageReference(reference: Reference, imageBoxInfo.x, imageBoxInfo.y, imageBoxInfo.width, imageBoxInfo.height)
+    val knowledgeForImage = KnowledgeForImage(id = getUUID(), imageReference = imageReference)
+    val registContentResultJson = ToposoidUtils.callComponent(
+      Json.toJson(knowledgeForImage).toString(),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_HOST"),
+      conf.getString("TOPOSOID_CONTENTS_ADMIN_PORT"),
+      "uploadTemporaryImage",
+      transversalState
+    )
+    val temporaryContentResult: RegistContentResult = Json.parse(registContentResultJson).as[RegistContentResult]
+    temporaryContentResult.knowledgeForImage
+  }
+  */
+  
+  /*
   def getKnowledge(lang:String, sentence: String, reference: Reference, imageBoxInfo: ImageBoxInfo, transversalState:TransversalState): Knowledge = {
     Knowledge(sentence, lang, "{}", false, List(getImageInfo(reference, imageBoxInfo, transversalState:TransversalState)))
   }
@@ -191,42 +207,6 @@ object TestUtilsEx {
       }
     }
     AnalyzedSentenceObjects(updatedAsos, asos.deductionConfiguration)
-  }
-  /*
-  val langPatternJP: Regex = "^ja_.*".r
-  val langPatternEN: Regex = "^en_.*".r
-
-  private def parse(knowledgeForParser: KnowledgeForParser, transversalState: TransversalState): AnalyzedPropositionPair = {
-
-    //Analyze everything as simple sentences as Claims, not just sentenceType
-    val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
-    val json: String = Json.toJson(inputSentenceForParser).toString()
-    val parserInfo: (String, String) = knowledgeForParser.knowledge.lang match {
-      case langPatternJP() => (conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT"))
-      case langPatternEN() => (conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT"))
-      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
-    }
-    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze", transversalState)
-    val analyzedSentenceObjects: AnalyzedSentenceObjects = Json.parse(parseResult).as[AnalyzedSentenceObjects]
-    AnalyzedPropositionPair(analyzedSentenceObjects = analyzedSentenceObjects, knowledgeForParser = knowledgeForParser)
-  }
-
-  private def getAnalyzedPropositionSet(knowledgeSentenceSetForParser: KnowledgeSentenceSetForParser, transversalState: TransversalState): AnalyzedPropositionSet = {
-
-    val premiseList = knowledgeSentenceSetForParser.premiseList.map(parse(_, transversalState))
-    val claimList = knowledgeSentenceSetForParser.claimList.map(parse(_, transversalState))
-
-    AnalyzedPropositionSet(
-      premiseList = premiseList,
-      premiseLogicRelation = knowledgeSentenceSetForParser.premiseLogicRelation,
-      claimList = claimList,
-      claimLogicRelation = knowledgeSentenceSetForParser.claimLogicRelation)
-  }
-
-  def registerData(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser, transversalState: TransversalState, addVectorFlag:Boolean = true): Unit = {
-    val analyzedPropositionSet =  getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState)
-    Sentence2Neo4jTransformer.createGraph(analyzedPropositionSet, transversalState)
-    if(addVectorFlag) FeatureVectorizer.createVector(knowledgeSentenceSetForParser, transversalState)
   }
   */
 }
