@@ -1,7 +1,7 @@
 version: '3'
 services:
   toposoid-easy-search-web:
-    image: toposoid-easy-search-web:0.7-SNAPSHOT
+    image: toposoid-easy-search-web:0.7-SNAPSHOT   
     tty: true
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-easy-search-web
@@ -24,12 +24,19 @@ services:
       - TOPOSOID_NON_SENTENCE_VECTORDB_ACCESSOR_HOST=data-accessor-non-sentence-weaviate-web
       - TOPOSOID_NON_SENTENCE_VECTORDB_ACCESSOR_PORT=9011
       - TOPOSOID_NON_SENTENCE_VECTORDB_SEARCH_NUM_MAX=5
+      - TOPOSOID_TABLE_VECTORDB_ACCESSOR_HOST=data-accessor-table-weaviate-web
+      - TOPOSOID_TABLE_VECTORDB_ACCESSOR_PORT=9011
+      - TOPOSOID_TABLE_VECTORDB_SEARCH_NUM_MAX=5
       - TOPOSOID_COMMON_IMAGE_RECOGNITION_HOST=toposoid-common-image-recognition-web
       - TOPOSOID_COMMON_IMAGE_RECOGNITION_PORT=9013
+      - TOPOSOID_COMMON_TABLE_RECOGNITION_HOST=toposoid-common-table-recognition-web
+      - TOPOSOID_COMMON_TABLE_RECOGNITION_PORT=9019
       - TOPOSOID_CONTENTS_ADMIN_HOST=toposoid-contents-admin-web
       - TOPOSOID_CONTENTS_ADMIN_PORT=9012
       - TOPOSOID_LANGUAGE_DETECTOR_HOST=toposoid-language-detector-web
       - TOPOSOID_LANGUAGE_DETECTOR_PORT=9017
+      - TOPOSOID_FILE_UPLOAD_FACADE_HOST=toposoid-file-upload-facade-web
+      - TOPOSOID_FILE_UPLOAD_FACADE_PORT=9024      
       - PLAY_HTTP_PORT=9014
     ports:
       - 9014:9014
@@ -134,6 +141,13 @@ services:
       - TOPOSOID_IMAGE_RECOGNITION_MOBILE_VIT_USE=1
     ports:
       - 9013:9013
+
+  toposoid-common-table-recognition-web:
+    image: toposoid/toposoid-common-table-recognition-web:0.7-SNAPSHOT
+    environment:
+      - TOPOSOID_TABLE_RECOGNITION_MODEL=tabicl 
+    ports:
+      - 9019:9019
 
   data-accessor-sentence-weaviate-web:
     image: toposoid/data-accessor-weaviate-web:0.7-SNAPSHOT
@@ -243,3 +257,58 @@ services:
     image: toposoid/toposoid-language-detector-web:0.7-SNAPSHOT
     ports:
       - 9017:9017
+
+  data-accessor-table-weaviate-web:
+    image: toposoid/data-accessor-weaviate-web:0.7-SNAPSHOT
+    environment:
+      - TOPOSOID_WEAVIATE_HOST=table-weaviate
+      - TOPOSOID_WEAVIATE_PORT=8083
+      - TOPOSOID_WEAVIATE_SIMILARITY_THRESHOLD=0.98
+      - TOPOSOID_DATA_ACCESSOR_PORT=9011
+    ports:
+      - 9023:9011
+    depends_on:
+      - table-weaviate
+
+  table-weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8083'
+      - --scheme
+      - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.26.3
+    ports:
+      - 8083:8083
+    #volumes:
+    #  - /var/weaviate:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-huggingface'
+      HUGGINGFACE_APIKEY: ''
+      ENABLE_MODULES: 'text2vec-cohere,text2vec-huggingface,text2vec-palm,text2vec-openai,generative-openai,generative-cohere,generative-palm,ref2vec-centroid,reranker-cohere,qna-openai'
+      CLUSTER_HOSTNAME: 'node1'
+
+  toposoid-file-upload-facade-web:
+    image: toposoid/toposoid-file-upload-facade-web:0.7-SNAPSHOT
+    environment:
+      - TOPOSOID_CONTENTS_URL=http://toposoid-contents-admin-web:9012/contents/
+      - TOPOSOID_CONTENTS_ADMIN_HOST=toposoid-contents-admin-web
+      - TOPOSOID_CONTENTS_ADMIN_PORT=9012      
+      - TOPOSOID_FILESCAN_HOST=clamav   
+      - TOPOSOID_FILESCAN_PORT=3310
+    ports:
+      - 9024:9024
+    depends_on:
+      - clamav
+
+  clamav:
+    image: clamav/clamav-debian
+    container_name: clamav
+    ports:
+      - "3310:3310" 
+
