@@ -269,10 +269,10 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val inputImageForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f)
 
       val json = Json.toJson(inputImageForSearch).toString()
-      val fr = FakeRequest(POST, "/searchTable")
+      val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson, TRANSVERSAL_STATE.str -> transversalStateJson)
         .withJsonBody(Json.parse(json))
-      val result = call(controller.searchTable(), fr)
+      val result = call(controller.searchImage(), fr)
       status(result) mustBe OK
       contentType(result) mustBe Some("application/json")
       val jsonResult: String = contentAsJson(result).toString()
