@@ -21,9 +21,8 @@ import org.apache.pekko.util.Timeout
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{TRANSVERSAL_STATE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, PropositionRelation, Reference}
-import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
-import com.ideal.linked.toposoid.test.utils.TestUtils.{uploadImage, deleteData, registerData}
+import com.ideal.linked.toposoid.test.utils.TestUtils.{uploadImage, uploadTable, deleteData, registerData}
 import controllers.TestUtilsEx.{getUUID}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.PlaySpec
@@ -36,6 +35,8 @@ import play.api.test._
 //import io.jvm.uuid.UUID
 
 import scala.concurrent.duration.DurationInt
+import com.ideal.linked.toposoid.knowledgebase.regist.model.TableReference
+import com.ideal.linked.toposoid.knowledgebase.regist.model.KnowledgeForTable
 
 class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with BeforeAndAfterAll with GuiceOneAppPerSuite with DefaultAwaitTimeout with Injecting {
 
@@ -77,6 +78,17 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
   val imageReferenceB = ImageReference(referenceB, x = 77, y = 98, width = 433, height = 222)
   val knowledgeForImageB = KnowledgeForImage(getUUID(), imageReferenceB)
 
+  val sentenceC = "証拠データが一つあります。"
+  val referenceC = Reference(url = "", surface = "証拠データが", surfaceIndex = 0, isWholeSentence = false,    
+    originalUrlOrReference = "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000001086170&fileKind=0")
+  val tableReferenceC = TableReference(referenceC, skipHeaderRows=5, skipRowList=List(),multiHeaderRows=4, sheetNameForExcel= "se0101")
+  val knowledgeForTableC = KnowledgeForTable(getUUID(), tableReferenceC)  
+
+  val sentenceD = "証拠データを一つ提出します。"
+  val referenceD = Reference(url = "", surface = "証拠データを", surfaceIndex = 0, isWholeSentence = false,
+    originalUrlOrReference = "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040292480&fileKind=1")
+  val tableReferenceD = TableReference(referenceD, skipHeaderRows=8, skipRowList=List(),multiHeaderRows=1, sheetNameForExcel= "")  
+  val knowledgeForTableD = KnowledgeForTable(getUUID(), tableReferenceD)    
 
   val lang = "ja_JP"
   "The specification1" should {
@@ -217,8 +229,8 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
 
 
       val testKnowledgeForImage = uploadImage(knowledgeForImageA, transversalState)
-      val inputSentenceForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, false)
-      val json = Json.toJson(inputSentenceForSearch).toString()
+      val inputImageForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f)
+      val json = Json.toJson(inputImageForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
         .withJsonBody(Json.parse(json))
@@ -248,8 +260,8 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       registerData(knowledgeSentenceSetForParser, transversalState)
 
       val testKnowledgeForImage = uploadImage(knowledgeForImageB, transversalState)
-      val inputSentenceForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, true)
-      val json = Json.toJson(inputSentenceForSearch).toString()
+      val inputImageForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f)
+      val json = Json.toJson(inputImageForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
         .withJsonBody(Json.parse(json))
@@ -262,14 +274,15 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       assert(searchResultEdges.analyzedEdges.size == 3)
     }
   }
-  /*
-  "The specification6" should {
+
+
+   "The specification6" should {
     "returns an appropriate response" in {
       val propositionId1 = getUUID()
       val sentenceId1 = getUUID()
       val sentenceId2 = getUUID()
-      val knowledgePremise = Knowledge(lang=lang, sentence=sentenceA, extentInfoJson = "{}", knowledgeForImages=List(uploadImage(knowledgeForImageA, transversalState)))
-      val knowledgeClaim = Knowledge(lang=lang, sentence=sentenceB, extentInfoJson = "{}", knowledgeForImages=List(uploadImage(knowledgeForImageB, transversalState)))
+      val knowledgePremise = Knowledge(lang=lang, sentence=sentenceC, extentInfoJson = "{}", knowledgeForTables=List(uploadTable(knowledgeForTableC, transversalState)))
+      val knowledgeClaim = Knowledge(lang=lang, sentence=sentenceD, extentInfoJson = "{}", knowledgeForTables=List(uploadTable(knowledgeForTableD, transversalState)))
 
       val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
         List(KnowledgeForParser(propositionId1, sentenceId1, knowledgePremise)),
@@ -278,14 +291,14 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation])
       registerData(knowledgeSentenceSetForParser, transversalState)
 
-      //Get TemporaryImage
-      val knowledgeForImage: KnowledgeForImage = getTemporaryImageInfo(referenceB, imageBoxInfoB, transversalState)
-      val inputSentenceForSearch = InputImageForSearch(url = knowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, true)
-      val json = Json.toJson(inputSentenceForSearch).toString()
-      val fr = FakeRequest(POST, "/searchImage")
-        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
+      val testKnowledgeForTable = uploadTable(knowledgeForTableC, transversalState)
+      val inputTableForSearch = InputTableForSearch(url = testKnowledgeForTable.tableReference.reference.url, lang = lang, similarityThreshold = 0.98f)
+
+      val json = Json.toJson(inputTableForSearch).toString()
+      val fr = FakeRequest(POST, "/searchTable")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson, TRANSVERSAL_STATE.str -> transversalStateJson)
         .withJsonBody(Json.parse(json))
-      val result = call(controller.searchImage(), fr)
+      val result = call(controller.searchTable(), fr)
       status(result) mustBe OK
       contentType(result) mustBe Some("application/json")
       val jsonResult: String = contentAsJson(result).toString()
@@ -294,6 +307,38 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
       assert(searchResultEdges.analyzedEdges.size == 3)
     }
   }
-  */
+
+  "The specification7" should {
+    "returns an appropriate response" in {
+      val propositionId1 = getUUID()
+      val sentenceId1 = getUUID()
+      val sentenceId2 = getUUID()
+      val knowledgePremise = Knowledge(lang=lang, sentence=sentenceC, extentInfoJson = "{}", knowledgeForTables=List(uploadTable(knowledgeForTableC, transversalState)))
+      val knowledgeClaim = Knowledge(lang=lang, sentence=sentenceD, extentInfoJson = "{}", knowledgeForTables=List(uploadTable(knowledgeForTableD, transversalState)))
+
+      val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
+        List(KnowledgeForParser(propositionId1, sentenceId1, knowledgePremise)),
+        List.empty[PropositionRelation],
+        List(KnowledgeForParser(propositionId1, sentenceId2, knowledgeClaim)),
+        List.empty[PropositionRelation])
+      registerData(knowledgeSentenceSetForParser, transversalState)
+
+      val testKnowledgeForTable = uploadTable(knowledgeForTableD, transversalState)
+      val inputTableForSearch = InputTableForSearch(url = testKnowledgeForTable.tableReference.reference.url, lang = lang, similarityThreshold = 0.98f)
+
+      val json = Json.toJson(inputTableForSearch).toString()
+      val fr = FakeRequest(POST, "/searchTable")
+        .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson, TRANSVERSAL_STATE.str -> transversalStateJson)
+        .withJsonBody(Json.parse(json))
+      val result = call(controller.searchTable(), fr)
+      status(result) mustBe OK
+      contentType(result) mustBe Some("application/json")
+      val jsonResult: String = contentAsJson(result).toString()
+      val searchResultEdges: SearchResultEdges = Json.parse(jsonResult).as[SearchResultEdges]
+      print(searchResultEdges)
+      assert(searchResultEdges.analyzedEdges.size == 3)
+    }
+  }
+ 
   //TODO:Add Test for Multiple Results
 }
