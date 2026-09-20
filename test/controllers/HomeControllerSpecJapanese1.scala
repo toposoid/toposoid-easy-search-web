@@ -215,7 +215,9 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation])
       registerData(knowledgeSentenceSetForParser, transversalState)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/val2017/000000039769.jpg", lang = lang, similarityThreshold = 0.85f, false)
+
+      val testKnowledgeForImage = uploadImage(knowledgeForImageA, transversalState)
+      val inputSentenceForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, false)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
@@ -245,7 +247,8 @@ class HomeControllerSpecJapanese1 extends PlaySpec with BeforeAndAfter with Befo
         List.empty[PropositionRelation])
       registerData(knowledgeSentenceSetForParser, transversalState)
 
-      val inputSentenceForSearch = InputImageForSearch(url = "http://images.cocodataset.org/train2017/000000428746.jpg", lang = lang, similarityThreshold = 0.85f, true)
+      val testKnowledgeForImage = uploadImage(knowledgeForImageB, transversalState)
+      val inputSentenceForSearch = InputImageForSearch(url = testKnowledgeForImage.imageReference.reference.url, lang = lang, similarityThreshold = 0.85f, true)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
