@@ -24,6 +24,7 @@ import com.ideal.linked.toposoid.common.{FeatureType, TRANSVERSAL_STATE, Toposoi
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
+import com.ideal.linked.toposoid.knowledgebase.search.{InputImageForSearch, InputSentenceForSearch, InputTableForSearch, SearchResultNode, SearchResultEdge, SearchResultEdges}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.vectorizer.FeatureVectorizer
 import com.typesafe.scalalogging.LazyLogging
@@ -44,6 +45,7 @@ import com.ideal.linked.toposoid.knowledgebase.table.model.RegisteredTableConten
 import com.ideal.linked.toposoid.knowledgebase.regist.model.TableReference
 import com.ideal.linked.toposoid.knowledgebase.table.model.SingleTable
 
+/*
 case class InputSentenceForSearch(sentence:String, lang:String, similarityThreshold:Float)
 object InputSentenceForSearch {
   implicit val jsonWrites: OWrites[InputSentenceForSearch] = Json.writes[InputSentenceForSearch]
@@ -79,7 +81,7 @@ object SearchResultEdges {
   implicit val jsonWrites: OWrites[SearchResultEdges] = Json.writes[SearchResultEdges]
   implicit val jsonReads: Reads[SearchResultEdges] = Json.reads[SearchResultEdges]
 }
-
+*/
 case class DetectedLanguage(lang:String)
 object DetectedLanguage {
   implicit val jsonWrites: OWrites[DetectedLanguage] = Json.writes[DetectedLanguage]
@@ -127,9 +129,9 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     try {
       val json = request.body
       val inputImageForSearch:InputImageForSearch  = Json.parse(json.toString).as[InputImageForSearch]
-      val reference = Reference(url = inputImageForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputImageForSearch.url)
-      val imageReference = ImageReference(reference, 0, 0, 0, 0)
-      val knowledgeForImage = convertImage(KnowledgeForImage(java.util.UUID.randomUUID().toString , imageReference = imageReference),  transversalState)
+      //val reference = Reference(url = inputImageForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputImageForSearch.url)
+      //val imageReference = ImageReference(reference, 0, 0, 0, 0)
+      val knowledgeForImage = convertImage(KnowledgeForImage(java.util.UUID.randomUUID().toString , imageReference = inputImageForSearch.imageReference),  transversalState)
 
       val vector = FeatureVectorizer.getImageVector(SingleImage(url=knowledgeForImage.imageReference.reference.url), transversalState)
       val searchResultEdges = getGraphData(vector, FeatureType.IMAGE.index, inputImageForSearch.similarityThreshold, transversalState)
@@ -148,9 +150,9 @@ class HomeController @Inject()(system: ActorSystem, cc: ControllerComponents)(im
     try {
       val json = request.body
       val inputTableForSearch:InputTableForSearch  = Json.parse(json.toString).as[InputTableForSearch]
-      val reference = Reference(url = inputTableForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputTableForSearch.url)
-      val tableReference = TableReference(reference)
-      val knowledgeForTable = convertTable(KnowledgeForTable(java.util.UUID.randomUUID().toString , tableReference = tableReference), transversalState)
+      //val reference = Reference(url = inputTableForSearch.url, surface = "", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = inputTableForSearch.url)
+      //val tableReference = TableReference(reference)
+      val knowledgeForTable = convertTable(KnowledgeForTable(java.util.UUID.randomUUID().toString , tableReference = inputTableForSearch.tableReference), transversalState)
 
       val vector = FeatureVectorizer.getTableVector(SingleTable(url=knowledgeForTable.tableReference.reference.url), transversalState)
       val searchResultEdges = getGraphData(vector, FeatureType.TABLE.index, inputTableForSearch.similarityThreshold, transversalState)
