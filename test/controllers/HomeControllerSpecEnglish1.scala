@@ -39,7 +39,7 @@ import play.api.test._
 import scala.concurrent.duration.DurationInt
 import com.ideal.linked.toposoid.knowledgebase.regist.model.TableReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.KnowledgeForTable
-import com.ideal.linked.toposoid.knowledgebase.search.{InputImageForSearch, InputSentenceForSearch, InputTableForSearch, SearchResultNode, SearchResultEdge, SearchResultEdges}
+import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch, InputTableForSearch, SearchResultNode, SearchResultEdge, SearchResultEdges}
 
 class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with BeforeAndAfterAll with GuiceOneAppPerSuite with DefaultAwaitTimeout with Injecting {
 
@@ -109,7 +109,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       registerData(knowledgeSentenceSetForParser, transversalState)
 
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson)
@@ -145,7 +145,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       registerData(knowledgeSentenceSetForParser, transversalState)
       Thread.sleep(5000)
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson, TRANSVERSAL_STATE.str -> transversalStateJson)
@@ -198,7 +198,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
         List.empty[PropositionRelation])
       registerData(knowledgeSentenceSetForParser2, transversalState)
 
-      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, lang = lang, similarityThreshold = 0.85f)
+      val inputSentenceForSearch = InputSentenceForSearch(sentence = sentenceA, similarityThreshold = 0.85f)
       val json = Json.toJson(inputSentenceForSearch).toString()
       val fr = FakeRequest(POST, "/searchSentence")
         .withHeaders("Content-type" -> "application/json", TRANSVERSAL_STATE.str -> transversalStateJson, TRANSVERSAL_STATE.str -> transversalStateJson)
@@ -237,7 +237,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val testKnowledgeForImage = uploadImage(knowledgeForImageA, transversalState)
       val reference = Reference(testKnowledgeForImage.imageReference.reference.url,surface="", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = "", metaInformations = List.empty[String])
       val imageReference = ImageReference(reference = reference, x=0, y=0, width=0, height=0)
-      val inputImageForSearch = InputImageForSearch(imageReference=imageReference, lang = lang, similarityThreshold = 0.85f)
+      val inputImageForSearch = InputImageForSearch(imageReference=imageReference, similarityThreshold = 0.85f)
 
       val json = Json.toJson(inputImageForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
@@ -271,7 +271,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val testKnowledgeForImage = uploadImage(knowledgeForImageB, transversalState)
       val reference = Reference(testKnowledgeForImage.imageReference.reference.url,surface="", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = "", metaInformations = List.empty[String])
       val imageReference = ImageReference(reference = reference, x=0, y=0, width=0, height=0)
-      val inputImageForSearch = InputImageForSearch(imageReference=imageReference, lang = lang, similarityThreshold = 0.85f)
+      val inputImageForSearch = InputImageForSearch(imageReference=imageReference, similarityThreshold = 0.85f)
 
       val json = Json.toJson(inputImageForSearch).toString()
       val fr = FakeRequest(POST, "/searchImage")
@@ -305,7 +305,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val testKnowledgeForTable = uploadTable(knowledgeForTableC, transversalState)
       val reference = Reference(testKnowledgeForTable.tableReference.reference.url, surface="", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = "", metaInformations = List.empty[String])
       val tableReference = TableReference(reference=reference, skipHeaderRows = 0, skipRowList =  List.empty[Int], multiHeaderRows = 1, sheetNameForExcel = "")
-      val inputTableForSearch = InputTableForSearch(tableReference = tableReference, lang = lang, similarityThreshold = 0.98f)
+      val inputTableForSearch = InputTableForSearch(tableReference = tableReference, similarityThreshold = 0.98f)
 
       val json = Json.toJson(inputTableForSearch).toString()
       val fr = FakeRequest(POST, "/searchTable")
@@ -339,7 +339,7 @@ class HomeControllerSpecEnglish1 extends PlaySpec with BeforeAndAfter with Befor
       val testKnowledgeForTable = uploadTable(knowledgeForTableD, transversalState)
       val reference = Reference(testKnowledgeForTable.tableReference.reference.url, surface="", surfaceIndex = -1, isWholeSentence = true, originalUrlOrReference = "", metaInformations = List.empty[String])
       val tableReference = TableReference(reference=reference, skipHeaderRows = 0, skipRowList = List.empty[Int], multiHeaderRows = 1, sheetNameForExcel = "")
-      val inputTableForSearch = InputTableForSearch(tableReference = tableReference, lang = lang, similarityThreshold = 0.98f)
+      val inputTableForSearch = InputTableForSearch(tableReference = tableReference, similarityThreshold = 0.98f)
 
       val json = Json.toJson(inputTableForSearch).toString()
       val fr = FakeRequest(POST, "/searchTable")

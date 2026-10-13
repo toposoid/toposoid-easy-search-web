@@ -24,7 +24,7 @@ import com.ideal.linked.toposoid.common.{FeatureType, TRANSVERSAL_STATE, Toposoi
 import com.ideal.linked.toposoid.knowledgebase.featurevector.model.{FeatureVectorIdentifier, FeatureVectorSearchResult, SingleFeatureVectorForEasySearch, SingleFeatureVectorForSearch}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{FeatureVector, SingleSentence}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, Reference}
-import com.ideal.linked.toposoid.knowledgebase.search.{InputImageForSearch, InputSentenceForSearch, InputTableForSearch, SearchResultNode, SearchResultEdge, SearchResultEdges}
+import com.ideal.linked.toposoid.knowledgebase.search.model.{InputImageForSearch, InputSentenceForSearch, InputTableForSearch, SearchResultNode, SearchResultEdge, SearchResultEdges}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.vectorizer.FeatureVectorizer
 import com.typesafe.scalalogging.LazyLogging
